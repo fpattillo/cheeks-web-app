@@ -53,7 +53,6 @@ const exerciseData: Exercise[] = [
   },
 ]
 
-
 export default function ExerciseList() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   useEffect(() => {
