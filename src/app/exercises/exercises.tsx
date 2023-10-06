@@ -62,7 +62,11 @@ export default function ExerciseList() {
         setExercises(exerciseData);
         return;
       } else {
-        const response = await fetch("https://api.api-ninjas.com/v1/exercises");
+        const headers = new Headers();
+        headers.append("X-Api-Key", process.env.API_NINJAS_KEY ?? "");
+        const response = await fetch("https://api.api-ninjas.com/v1/exercises", {
+          headers: headers,
+        });
         const data = await response.json();
         setExercises(data);
       }
