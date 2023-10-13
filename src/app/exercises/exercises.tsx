@@ -1,5 +1,9 @@
 "use client";
 import { useEffect, useState } from "react"
+import { getExercises } from "../fetch/exercises";
+import { Selector } from "../components/Exercises/selector";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface Exercise {
   name: string;
@@ -55,35 +59,49 @@ const exerciseData: Exercise[] = [
 
 export default function ExerciseList() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  useEffect(() => {
-    const fetchExercises = async () => {
-      if (process.env.NODE_ENV === "development") {
-        setExercises(exerciseData);
-        return;
-      } else {
-        const headers = new Headers();
-        headers.append("X-Api-Key", process.env.API_NINJAS_KEY ?? "");
-        const response = await fetch("https://api.api-ninjas.com/v1/exercises", {
-          headers: headers,
-        });
-        const data = await response.json();
-        setExercises(data);
-      }
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [type, setType] = useState<string>("");
+  const [muscle, setMuscle] = useState<string>("");
+  const [difficulty, setDifficulty] = useState<string>("");
+  const [offset, setOffset] = useState<number>(0);
+  const [filtersLoading, setFiltersLoading] = useState<boolean>(false);
+
+  const filters: {[key: string]: string | number} = {name: name, type: type, muscle: muscle, difficulty: difficulty, offset: offset};
+
+  const fetchExercises = async () => {
+    if (process.env.NODE_ENV === "development") {
+      setExercises(exerciseData);
+      return;
+    } else {
+      const data = await getExercises({ name, type, muscle, difficulty, offset });
+      setExercises(data);
     }
+  }
+
+  useEffect(() => {
     fetchExercises();
   }, []);
   
   return (
     <>
       <h1 className="mb-8">Exercises</h1>
+      <div className="flex justify-between gap-3 p-3 items-center">
+        {Object.keys(filters).map((filterKey: string, index) => (
+          <Selector placeholder={filterKey} value={filters[filterKey]} key={'filter-select-' + index}/>
+        ))}
+        <Button variant='outline' disabled={filtersLoading}>
+          {filtersLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /><span>Loading...</span></> : 'Apply'}
+        </Button>
+      </div>
       {exercises.map((exercise, index) => (
-        <div className="p-4 border border-solid mb-4 rounded-lg shadow-md" key={index}>
+        <div className="max-w-full p-4 border border-solid mb-4 rounded-lg shadow-md" key={index}>
           <h2 className="mb-3">{exercise.name}</h2>
           <p><strong>Type: </strong>{exercise.type}</p>
           <p><strong>Muscle: </strong>{exercise.muscle}</p>
           <p><strong>Equipment: </strong>{exercise.equipment}</p>
           <p><strong>Difficulty: </strong>{exercise.difficulty}</p>
-          <p><strong>Instructions: </strong>{exercise.instructions}</p>
+          <p className="text-ellipsis whitespace-nowrap overflow-hidden"><strong>Instructions: </strong>{exercise.instructions}</p>
         </div>
       ))}
     </>
